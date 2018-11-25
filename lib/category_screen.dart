@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+
 import 'package:task_02_category_widget/category.dart';
 import 'package:task_02_category_widget/unit.dart';
+import 'backdrop.dart';
+import 'category_tile.dart';
+import 'converter_screen.dart';
 
 final _backgroundColor = Colors.green[100];
 
@@ -12,7 +16,9 @@ class CategoryScreen extends StatefulWidget {
 }
 
 class _CategoryScreenState extends State<CategoryScreen> {
-  final categories = <Category>[];
+  Category _defaultCategory;
+  Category _currentCategory;
+  final _categories = <Category>[];
 
   static const _categoryNames = <String>[
     'Length',
@@ -61,13 +67,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
     }),
   ];
 
-  Widget _buildCategoryWidget(categories) {
-    return ListView.builder(
-      itemBuilder: (BuildContext context, int index) => categories[index],
-      itemCount: categories.length,
-    );
-  }
-
   /// Returns a list of mock [Unit]s.
   List<Unit> _retrieveUnitList(String categoryName) {
     return List.generate(10, (int i) {
@@ -80,7 +79,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   /// Returns a [Category]
-  Widget _catgory(name, color, iconLocation, units) {
+  Category _category(name, color, iconLocation, units) {
     return Category(
       name: name,
       color: color,
@@ -93,33 +92,54 @@ class _CategoryScreenState extends State<CategoryScreen> {
   void initState() {
     super.initState();
     for (var i = 0; i < _categoryNames.length; i++) {
-      categories.add(_catgory(
-        _categoryNames[i],
-        _baseColors[i],
-        Icons.adb,
-        _retrieveUnitList(_categoryNames[i]),
-      ));
+      var category = _category(_categoryNames[i], _baseColors[i], Icons.adb,
+          _retrieveUnitList(_categoryNames[i]));
+      if (i == 0) {
+        _defaultCategory = category;
+      }
+      _categories.add(category);
     }
+  }
+
+  /// Function to call when a [Category] is tapped.
+  void _onCategoryTap(Category category) {
+    setState(() {
+      _currentCategory = category;
+    });
+  }
+
+  Widget _buildCategoryWidgets() {
+    return ListView.builder(
+      itemBuilder: (BuildContext context, int index) {
+        return CategoryTile(
+          category: _categories[index],
+          onTap: _onCategoryTap,
+        );
+      },
+      itemCount: _categories.length,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final listView = Container(
-      color: _backgroundColor,
-      padding: EdgeInsets.symmetric(horizontal: 8.0),
-      child: _buildCategoryWidget(categories),
+    final listView = Padding(
+      padding: EdgeInsets.only(
+        left: 8.0,
+        right: 8.0,
+        bottom: 48.0,
+      ),
+      child: _buildCategoryWidgets(),
     );
 
-    final appBar = AppBar(
-      elevation: 0.0,
-      title: Text('Unit Converter'),
-      centerTitle: true,
-      backgroundColor: _backgroundColor,
-    );
-
-    return Scaffold(
-      appBar: appBar,
-      body: listView,
+    return Backdrop(
+      currentCategory:
+          _currentCategory == null ? _defaultCategory : _currentCategory,
+      frontPanel: _currentCategory == null
+          ? ConverterScreen(category: _defaultCategory)
+          : ConverterScreen(category: _currentCategory),
+      backPanel: listView,
+      frontTitle: Text('Unit Converter'),
+      backTitle: Text('Select a Category'),
     );
   }
 }
