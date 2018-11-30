@@ -17,9 +17,8 @@ class CategoryTile extends StatelessWidget {
   const CategoryTile({
     Key key,
     @required this.category,
-    @required this.onTap,
+    this.onTap,
   })   : assert(category != null),
-        assert(onTap != null),
         super(key: key);
 
   /// Builds a custom widget that shows [Category] information.
