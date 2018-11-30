@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 import 'package:task_02_category_widget/category.dart';
@@ -5,8 +8,6 @@ import 'package:task_02_category_widget/unit.dart';
 import 'backdrop.dart';
 import 'category_tile.dart';
 import 'converter_screen.dart';
-
-final _backgroundColor = Colors.green[100];
 
 class CategoryScreen extends StatefulWidget {
   const CategoryScreen();
@@ -19,17 +20,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
   Category _defaultCategory;
   Category _currentCategory;
   final _categories = <Category>[];
-
-  static const _categoryNames = <String>[
-    'Length',
-    'Area',
-    'Volume',
-    'Mass',
-    'Time',
-    'Digital Storage',
-    'Energy',
-    'Currency',
-  ];
 
   static const _baseColors = <ColorSwatch>[
     ColorSwatch(0xFF6AB7A8, {
@@ -67,17 +57,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
     }),
   ];
 
-  /// Returns a list of mock [Unit]s.
-  List<Unit> _retrieveUnitList(String categoryName) {
-    return List.generate(10, (int i) {
-      i += 1;
-      return Unit(
-        name: '$categoryName Unit $i',
-        conversion: i.toDouble(),
-      );
-    });
-  }
-
   /// Returns a [Category]
   Category _category(name, color, iconLocation, units) {
     return Category(
@@ -88,17 +67,42 @@ class _CategoryScreenState extends State<CategoryScreen> {
     );
   }
 
+  /// wait for our JSON asset to be loaded in (async) using didChangeDependencies()
   @override
-  void initState() {
-    super.initState();
-    for (var i = 0; i < _categoryNames.length; i++) {
-      var category = _category(_categoryNames[i], _baseColors[i], Icons.adb,
-          _retrieveUnitList(_categoryNames[i]));
-      if (i == 0) {
-        _defaultCategory = category;
-      }
-      _categories.add(category);
+   Future<void> didChangeDependencies() async {
+     super.didChangeDependencies();
+     // We have static unit conversions located in our
+     // assets/data/regular_units.json
+     if (_categories.isEmpty) {
+       await _retrieveLocalCategories();
+     }
+   }
+
+   /// Retrieves a list of [Categories] and their [Unit]s
+  Future<void> _retrieveLocalCategories() async {
+    // Consider omitting the types for local variables. For more details on Effective
+    // Dart Usage, see https://www.dartlang.org/guides/language/effective-dart/usage
+    final json = DefaultAssetBundle
+        .of(context)
+        .loadString('assets/data/regular_units.json');
+    final data = JsonDecoder().convert(await json);
+    if (data is! Map) {
+      throw ('Data retrieved from API is not a Map');
     }
+
+    var categoryIndex = 0;
+    data.keys.forEach((key){
+      final List<Unit> units = data[key].map<Unit>((dynamic data) => Unit.fromJson(data)).toList();
+
+      var category = _category(key, _baseColors[categoryIndex], Icons.adb, units);
+      setState(() {
+        if (categoryIndex == 0) {
+          _defaultCategory = category;
+        }
+        _categories.add(category);
+      });
+      categoryIndex += 1;
+    });
   }
 
   /// Function to call when a [Category] is tapped.
