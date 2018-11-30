@@ -3,8 +3,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
-import 'package:task_02_category_widget/category.dart';
-import 'package:task_02_category_widget/unit.dart';
+import 'category.dart';
+import 'unit.dart';
 import 'backdrop.dart';
 import 'category_tile.dart';
 import 'converter_screen.dart';
@@ -57,6 +57,17 @@ class _CategoryScreenState extends State<CategoryScreen> {
     }),
   ];
 
+  static const _icons = <String>[
+    'assets/icons/length.png',
+    'assets/icons/area.png',
+    'assets/icons/volume.png',
+    'assets/icons/mass.png',
+    'assets/icons/time.png',
+    'assets/icons/digital_storage.png',
+    'assets/icons/power.png',
+    'assets/icons/currency.png',
+  ];
+
   /// Returns a [Category]
   Category _category(name, color, iconLocation, units) {
     return Category(
@@ -94,7 +105,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     data.keys.forEach((key){
       final List<Unit> units = data[key].map<Unit>((dynamic data) => Unit.fromJson(data)).toList();
 
-      var category = _category(key, _baseColors[categoryIndex], Icons.adb, units);
+      var category = _category(key, _baseColors[categoryIndex], _icons[categoryIndex], units);
       setState(() {
         if (categoryIndex == 0) {
           _defaultCategory = category;

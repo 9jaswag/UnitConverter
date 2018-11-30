@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 // @required is defined in the meta.dart package
 import 'package:meta/meta.dart';
 
-import 'package:task_02_category_widget/unit.dart';
+import 'unit.dart';
 
 // final _rowHeight = 100.0;
 // final _borderRadius = BorderRadius.circular(_rowHeight / 2);
@@ -14,7 +14,7 @@ import 'package:task_02_category_widget/unit.dart';
 class Category {
   final String name;
   final ColorSwatch color;
-  final IconData iconLocation;
+  final String iconLocation;
   final List<Unit> units;
 
   /// Creates a [Category].
