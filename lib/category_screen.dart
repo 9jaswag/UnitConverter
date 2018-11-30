@@ -3,11 +3,12 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
-import 'category.dart';
-import 'unit.dart';
+import 'api.dart';
 import 'backdrop.dart';
+import 'category.dart';
 import 'category_tile.dart';
 import 'converter_screen.dart';
+import 'unit.dart';
 
 class CategoryScreen extends StatefulWidget {
   const CategoryScreen();
@@ -80,21 +81,21 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   /// wait for our JSON asset to be loaded in (async) using didChangeDependencies()
   @override
-   Future<void> didChangeDependencies() async {
-     super.didChangeDependencies();
-     // We have static unit conversions located in our
-     // assets/data/regular_units.json
-     if (_categories.isEmpty) {
-       await _retrieveLocalCategories();
-     }
-   }
+  Future<void> didChangeDependencies() async {
+    super.didChangeDependencies();
+    // We have static unit conversions located in our
+    // assets/data/regular_units.json
+    if (_categories.isEmpty) {
+      await _retrieveLocalCategories();
+      await _retrieveApiCategory();
+    }
+  }
 
-   /// Retrieves a list of [Categories] and their [Unit]s
+  /// Retrieves a list of [Categories] and their [Unit]s
   Future<void> _retrieveLocalCategories() async {
     // Consider omitting the types for local variables. For more details on Effective
     // Dart Usage, see https://www.dartlang.org/guides/language/effective-dart/usage
-    final json = DefaultAssetBundle
-        .of(context)
+    final json = DefaultAssetBundle.of(context)
         .loadString('assets/data/regular_units.json');
     final data = JsonDecoder().convert(await json);
     if (data is! Map) {
@@ -102,10 +103,12 @@ class _CategoryScreenState extends State<CategoryScreen> {
     }
 
     var categoryIndex = 0;
-    data.keys.forEach((key){
-      final List<Unit> units = data[key].map<Unit>((dynamic data) => Unit.fromJson(data)).toList();
+    data.keys.forEach((key) {
+      final List<Unit> units =
+          data[key].map<Unit>((dynamic data) => Unit.fromJson(data)).toList();
 
-      var category = _category(key, _baseColors[categoryIndex], _icons[categoryIndex], units);
+      var category = _category(
+          key, _baseColors[categoryIndex], _icons[categoryIndex], units);
       setState(() {
         if (categoryIndex == 0) {
           _defaultCategory = category;
@@ -114,6 +117,37 @@ class _CategoryScreenState extends State<CategoryScreen> {
       });
       categoryIndex += 1;
     });
+  }
+
+  Future<void> _retrieveApiCategory() async {
+    /// add placeholder details while making API call
+    setState(() {
+      _categories.add(Category(
+        name: apiCategory['name'],
+        units: [],
+        color: _baseColors.last,
+        iconLocation: _icons.last,
+      ));
+    });
+
+    final api = Api();
+    final jsonUnits = await api.getUnits(apiCategory['route']);
+
+    if (jsonUnits != null) {
+      final units = <Unit>[];
+      for (var unit in jsonUnits) {
+        units.add(Unit.fromJson(unit));
+      }
+      setState(() {
+        _categories.removeLast();
+        _categories.add(Category(
+          name: apiCategory['name'],
+          units: units,
+          color: _baseColors.last,
+          iconLocation: _icons.last,
+        ));
+      });
+    }
   }
 
   /// Function to call when a [Category] is tapped.
@@ -139,11 +173,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
       return GridView.count(
         crossAxisCount: 2,
         childAspectRatio: 3,
-        children: _categories.map((Category cat){
-          return CategoryTile(
-            category: cat,
-            onTap: _onCategoryTap
-          );
+        children: _categories.map((Category cat) {
+          return CategoryTile(category: cat, onTap: _onCategoryTap);
         }).toList(),
       );
     }
